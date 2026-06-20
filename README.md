@@ -11,10 +11,14 @@ x86 Linux both work). Once it's running you'll have a web dashboard at
 
 ## Quick start
 
-> **New to Raspberry Pi?** Use the
-> [step-by-step guide for a bare SD card](PISETUP.md) instead — it walks
-> through imaging the card from Windows, booting the Pi, SSH, and
-> everything below in a single linear flow.
+> **New to Docker?** Use one of the platform-specific walkthroughs instead —
+> they cover everything from a bare machine to a running dashboard in a
+> single linear flow:
+>
+> - [**Raspberry Pi (bare SD card)**](PISETUP.md)
+> - [**Windows 10 / 11 (Docker Desktop)**](WINDOWS-SETUP.md)
+>
+> The Quick Start below assumes you already have Docker installed.
 
 ### 1. Install Docker (skip if you already have it)
 
