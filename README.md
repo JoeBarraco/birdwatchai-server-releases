@@ -12,7 +12,7 @@ x86 Linux both work). Once it's running you'll have a web dashboard at
 ## Quick start
 
 > **New to Raspberry Pi?** Use the
-> [step-by-step guide for a bare SD card](PI-SETUP.md) instead — it walks
+> [step-by-step guide for a bare SD card](PISETUP.md) instead — it walks
 > through imaging the card from Windows, booting the Pi, SSH, and
 > everything below in a single linear flow.
 
@@ -48,18 +48,33 @@ configure notifications. Your detection history + config persist in
 
 ## Updating
 
+Two paths — both end up at the same place.
+
+### One-click from the dashboard (recommended)
+
+When a newer release is published, the **⬆ Update available** button
+appears in the Engine status card. Click it → review the release notes
+in the modal → click **Apply update**. The Watchtower sidecar (included
+in `docker-compose.yml`) pulls the new image, recreates the container,
+and the page reloads on the new version in ~90 seconds.
+
+This requires that you started the stack with the included
+`docker-compose.yml` — it wires the `birdwatch` and `watchtower` services
+together with a shared token. Older installs that predate this file
+won't have the watchtower container; the modal will say so and the
+Apply button will stay disabled. Update the manual way (below) once,
+re-pull this repo, and the auto-apply path lights up.
+
+### Manually from the shell
+
 ```bash
 cd ~/birdwatch
 docker compose pull
 docker compose up -d
 ```
 
-That's it — pulls the latest published image and recreates the container.
-Your `data/` folder is untouched.
-
-The dashboard's Engine status card shows an **⬆ Update available** button
-whenever a newer release lands here. Click it for the release notes, then
-run the two commands above on the host.
+Pulls the latest image and recreates the container. Your `data/`
+folder is untouched.
 
 ## Useful day-to-day commands
 
@@ -91,4 +106,3 @@ The product site lives at <https://www.birdwatchai.com>. For
 operational issues, open an issue on this repo — please include the output
 of `docker logs --tail 200 birdwatch` and the contents of
 `data/config.json` (with any API keys / passwords redacted).
-

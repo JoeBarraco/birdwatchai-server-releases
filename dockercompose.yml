@@ -1,0 +1,68 @@
+# BirdWatchAI Server — Docker Compose
+#
+# After cloning this repo, run:    docker compose up -d
+# To update to the latest release: open the dashboard, click the ⬆ Update available button
+#                                  in the Engine status card, review the release notes,
+#                                  and click Apply update. The watchtower sidecar pulls
+#                                  the new image and recreates the container automatically.
+#
+# Manual update (if you'd rather drive from the shell):
+#                                  docker compose pull && docker compose up -d
+#
+# Detection history, config, and logs live in ./data on the host so they survive image updates
+# and container recreations. Back up that folder if you care about your detection history.
+
+services:
+  birdwatch:
+    image: ghcr.io/joebarraco/birdwatchai-server:latest
+    container_name: birdwatch
+    restart: unless-stopped
+    ports:
+      # Dashboard. Change the LEFT side (e.g. "9090:8080") to expose on a different host port.
+      - "8080:8080"
+    environment:
+      # Pick up the host's timezone via the mounts below; the env var is the belt that goes
+      # with /etc/localtime + /etc/timezone braces — .NET checks TZ first.
+      TZ: ${TZ:-UTC}
+      # Wires the dashboard's "Apply update" button to the watchtower sidecar below. The token
+      # must match WATCHTOWER_HTTP_API_TOKEN on the watchtower service. The default below works
+      # as-is on a single-install machine; set BIRDWATCH_UPDATE_TOKEN in a .env file (or your
+      # shell) if you'd rather use your own.
+      BirdWatch__Update__WatchtowerUrl: http://watchtower:8080/v1/update
+      BirdWatch__Update__WatchtowerToken: ${BIRDWATCH_UPDATE_TOKEN:-birdwatch-update-please}
+    volumes:
+      # All persistent state lives here: config.json, birdwatch.db (SQLite), snapshots/, logs/,
+      # config.bak/, dataprotection-keys/. Survives every image update.
+      - ./data:/data
+      # Inherit the host's timezone so dashboard timestamps + scheduled reports match wall clock.
+      # If you'd rather pin a specific zone, set TZ in this file (e.g. `TZ: America/New_York`)
+      # and you can drop the two mounts below.
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    labels:
+      # Only THIS container is managed by the watchtower sidecar — other containers on the
+      # host are left untouched (we set --label-enable on watchtower below).
+      com.centurylinklabs.watchtower.enable: "true"
+
+  # Watchtower sidecar: dormant until the dashboard's "Apply update" button POSTs to its HTTP
+  # API. On trigger it pulls the latest matching image from GHCR and recreates the birdwatch
+  # container. Doesn't poll on its own — periodic polls are disabled so you stay in control
+  # of when updates apply.
+  watchtower:
+    image: containrrr/watchtower
+    container_name: birdwatch-watchtower
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_HTTP_API_UPDATE: "true"
+      WATCHTOWER_HTTP_API_PERIODIC_POLLS: "false"
+      WATCHTOWER_HTTP_API_TOKEN: ${BIRDWATCH_UPDATE_TOKEN:-birdwatch-update-please}
+      # Only update containers with the matching label (so this never touches anything you
+      # didn't opt in).
+      WATCHTOWER_LABEL_ENABLE: "true"
+      # Remove the old image after a successful update — keeps the disk tidy.
+      WATCHTOWER_CLEANUP: "true"
+    volumes:
+      # Required for watchtower to manage other containers. This is the standard homelab-
+      # accepted tradeoff: anything that can write to docker.sock effectively has root on
+      # the host. Don't expose this stack to the public internet.
+      - /var/run/docker.sock:/var/run/docker.sock
