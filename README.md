@@ -11,6 +11,11 @@ x86 Linux both work). Once it's running you'll have a web dashboard at
 
 ## Quick start
 
+> **New to Raspberry Pi?** Use the
+> [step-by-step guide for a bare SD card](PI-SETUP.md) instead — it walks
+> through imaging the card from Windows, booting the Pi, SSH, and
+> everything below in a single linear flow.
+
 ### 1. Install Docker (skip if you already have it)
 
 ```bash
