@@ -39,6 +39,16 @@ services:
       # and you can drop the two mounts below.
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+    # Uncomment the devices: + group_add: blocks below if you're using a wired Pi camera
+    # (Arducam / Raspberry Pi Camera Module attached over the CSI ribbon cable) instead of an
+    # RTSP IP camera. The Settings → Camera page picks which backend the engine uses; both can
+    # coexist on disk, you just have to expose the v4l2 device into the container.
+    #
+    # devices:
+    #   - /dev/video0:/dev/video0   # single-camera Pi (most installs)
+    #   - /dev/video1:/dev/video1   # add more lines if `ls /dev/video*` shows multiple
+    # group_add:
+    #   - "44"                      # `video` group on Pi OS; lets the container open /dev/video*
     labels:
       # Only THIS container is managed by the watchtower sidecar — other containers on the
       # host are left untouched (we set --label-enable on watchtower below).
