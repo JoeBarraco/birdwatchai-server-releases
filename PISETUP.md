@@ -84,15 +84,17 @@ set in Step 1.) Accept the fingerprint when prompted, enter your password.
 the Pi's IP in your router's admin page (look for the hostname you set),
 then `ssh birdwatch@<that IP>`.
 
-## 4. Update the OS
+## 4. Update the OS and install git
 
 Once you're at the Pi's prompt:
 
 ```bash
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y && sudo apt install -y git
 ```
 
-Takes 2-5 minutes depending on how stale the image was.
+Takes 2-5 minutes depending on how stale the image was. (Raspberry Pi OS
+Lite doesn't ship with `git` — we install it now so the BirdWatchAI
+clone step works.)
 
 ## 5. Install Docker
 
