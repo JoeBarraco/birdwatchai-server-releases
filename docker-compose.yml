@@ -71,6 +71,14 @@ services:
       WATCHTOWER_LABEL_ENABLE: "true"
       # Remove the old image after a successful update — keeps the disk tidy.
       WATCHTOWER_CLEANUP: "true"
+      # Pin the Docker API version. Docker 26+ dropped legacy API versions and refuses
+      # connections from clients that try to negotiate < 1.40. Watchtower's bundled client
+      # defaults to a version below that on some Docker daemons, which puts the container
+      # in a restart loop with "client version 1.25 is too old. Minimum supported API
+      # version is 1.40" and birdwatch's apply POST then fails with a DNS error because
+      # watchtower never stays up long enough to register. 1.44 is recent enough to satisfy
+      # current Docker daemons and old enough to be widely supported.
+      DOCKER_API_VERSION: "1.44"
     volumes:
       # Required for watchtower to manage other containers. This is the standard homelab-
       # accepted tradeoff: anything that can write to docker.sock effectively has root on
