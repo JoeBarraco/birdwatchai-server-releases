@@ -95,8 +95,41 @@ Tested on:
 - Raspberry Pi 4 / 5 (4 GB+, Raspberry Pi OS Lite 64-bit)
 - Any x86_64 Linux box with Docker
 
-You'll also need an RTSP-capable camera (Tapo, Reolink, etc.) and optionally
-a ZIP code for weather correlation. The setup wizard walks through both.
+You'll also need a camera. Two supported types:
+
+- **RTSP / IP camera** (TP-Link Tapo, Reolink, Amcrest, etc.). What most installs use.
+  The setup wizard asks for the RTSP URL.
+- **Wired Raspberry Pi camera** (Raspberry Pi Camera Module, Arducam, etc., attached
+  over the CSI ribbon cable). See "Using a Pi camera" below.
+
+Optionally, a ZIP code for weather correlation. The setup wizard walks through that.
+
+## Using a Pi camera (CSI ribbon cable)
+
+The dashboard supports a wired Pi camera as an alternative to RTSP. A few one-time
+steps to wire it up:
+
+1. **Plug the ribbon cable in with the Pi powered off.** Lift the CSI port's clip,
+   slide the ribbon in (contacts toward the HDMI port on Pi 4 / 5), press the clip
+   back down.
+2. **Enable the camera interface on the Pi.** On Pi OS Bookworm, `sudo raspi-config`
+   → Interface Options → Camera → Yes → Finish → reboot. (No-op on most fresh installs:
+   libcamera + v4l2 compat are enabled by default.)
+3. **Verify the OS sees it.** SSH in and run `libcamera-hello --list-cameras` — you
+   should see at least one camera listed. Also confirm `ls /dev/video*` shows
+   `/dev/video0`.
+4. **Expose the device into the container.** Edit `docker-compose.yml` (in the same
+   folder you ran `docker compose up -d`) and uncomment the `devices:` + `group_add:`
+   blocks at the bottom of the `birdwatch:` service. Save, then
+   `docker compose up -d` to recreate the container.
+5. **Switch the camera type in the dashboard.** Open `http://<your-host>:8080` →
+   Settings → Camera → set "Camera type" to **Pi camera** → enter the device path
+   (`/dev/video0` for a single camera) → click **Test camera** to confirm a frame
+   captures → **Save**.
+
+The dashboard's existing motion + identify pipeline runs on the Pi camera feed
+the same as on RTSP — frame-diff motion detection is the default trigger (Settings →
+Detection → Motion detection threshold). ONVIF doesn't apply to wired cameras.
 
 ## Releases
 
