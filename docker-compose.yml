@@ -1,0 +1,29 @@
+# BirdWatchAI Server — Docker Compose
+#
+# After cloning this repo, run:    docker compose up -d
+# To update to the latest release: docker compose pull && docker compose up -d
+#
+# Detection history, config, and logs live in ./data on the host so they survive image updates
+# and container recreations. Back up that folder if you care about your detection history.
+
+services:
+  birdwatch:
+    image: ghcr.io/joebarraco/birdwatchai-server:latest
+    container_name: birdwatch
+    restart: unless-stopped
+    ports:
+      # Dashboard. Change the LEFT side (e.g. "9090:8080") to expose on a different host port.
+      - "8080:8080"
+    environment:
+      # Pick up the host's timezone via the mounts below; the env var is the belt that goes
+      # with /etc/localtime + /etc/timezone braces — .NET checks TZ first.
+      TZ: ${TZ:-UTC}
+    volumes:
+      # All persistent state lives here: config.json, birdwatch.db (SQLite), snapshots/, logs/,
+      # config.bak/, dataprotection-keys/. Survives every image update.
+      - ./data:/data
+      # Inherit the host's timezone so dashboard timestamps + scheduled reports match wall clock.
+      # If you'd rather pin a specific zone, set TZ in this file (e.g. `TZ: America/New_York`)
+      # and you can drop the two mounts below.
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
