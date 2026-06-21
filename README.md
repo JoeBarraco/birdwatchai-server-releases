@@ -108,8 +108,8 @@ Optionally, a ZIP code for weather correlation. The setup wizard walks through t
 
 The dashboard supports a wired Arducam / Raspberry Pi Camera Module attached over the
 CSI ribbon cable, as an alternative to RTSP. Capture goes through libcamera (the
-modern Pi camera stack), not legacy v4l2 — so the container needs a broader set of
-device passthroughs than a USB webcam would. One-time setup:
+modern Pi camera stack), not legacy v4l2 — so the container needs broader access to
+the Pi's hardware than a USB webcam would. One-time setup:
 
 1. **Plug the ribbon cable in with the Pi powered off.** Lift the CSI port's clip,
    slide the ribbon in (contacts toward the HDMI port on Pi 4 / 5), press the clip
@@ -119,17 +119,28 @@ device passthroughs than a USB webcam would. One-time setup:
    libcamera + v4l2 compat are enabled by default.)
 3. **Verify the OS sees it.** SSH in and run `libcamera-hello --list-cameras` — you
    should see at least one camera listed (e.g. `imx519` for an Arducam motorized-lens
-   module, `imx708` for the Camera Module 3). If "No cameras available!", go back to
-   the ribbon-cable seat — that's the most common cause.
-4. **Edit `~/birdwatch/docker-compose.yml`** to expose the camera into the container.
-   The file ships with the relevant lines commented out at the bottom of the
-   `birdwatch:` service. Uncomment (a) the single line to add to `volumes:`
-   (`- /run/udev:/run/udev:ro`), (b) the whole `devices:` block, and (c) the whole
-   `group_add:` block.
-5. **Recreate the container** with the new mounts:
+   module, `imx708` for the Camera Module 3, `ov5647` for the original v1 module). If
+   "No cameras available!", go back to the ribbon-cable seat — that's the most common
+   cause.
+4. **Edit `~/birdwatch/docker-compose.yml`** to grant camera access. The file ships
+   with a single commented-out line under the "Pi camera support" block:
+   `# privileged: true`. Uncomment it (delete the leading `# `, keep the indentation
+   of `privileged: true` matching the lines above it like `restart:` and `ports:`).
+   That's the entire compose change.
+
+   *Why privileged mode and not selective device passthrough?* libcamera reads the
+   host's device tree at `/proc/device-tree/model` to confirm "this is a Raspberry
+   Pi" before it'll initialize the camera stack. Docker mounts its own procfs over
+   `/proc` after applying bind mounts, so a `- /proc/device-tree:/proc/device-tree:ro`
+   mount gets shadowed and the platform check fails ("No cameras available!" inside
+   the container even though all the video / media nodes are wired through). Granular
+   device passthrough was the original approach and works on Bullseye but not
+   Bookworm. Privileged mode grants the container the host's full device + sysfs view
+   in one line — the standard pattern for libcamera in Docker.
+5. **Recreate the container** so the new mode takes effect:
    ```bash
    cd ~/birdwatch
-   docker compose up -d
+   docker compose up -d --force-recreate birdwatch
    ```
 6. **Switch the camera type in the dashboard.** Open `http://<your-host>:8080` →
    Settings → Camera → set "Camera type" to **Pi camera** → leave the device path at
@@ -140,12 +151,14 @@ device passthroughs than a USB webcam would. One-time setup:
 If Test camera errors out, the most useful diagnostic is:
 
 ```bash
-docker exec birdwatch libcamera-hello --list-cameras
+docker exec birdwatch rpicam-hello --list-cameras
 ```
 
-Run inside the container — if it doesn't see the camera, the devices/udev mounts
-aren't right. Compare the dashboard logs (`docker logs birdwatch --tail 30`) against
-what rpicam-still reports for hints.
+Run inside the container — if it lists your sensor, the access path works and the
+issue is on the app side. If it says "No cameras available!" inside the container
+but works on the host, you likely missed step 4 (the `privileged: true` uncomment).
+Confirm with `docker inspect birdwatch --format '{{.HostConfig.Privileged}}'` — it
+should print `true`.
 
 The existing motion + identify pipeline runs on the Pi camera feed the same as on
 RTSP — frame-diff motion detection is the default trigger (Settings → Detection →
