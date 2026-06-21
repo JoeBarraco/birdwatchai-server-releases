@@ -49,6 +49,11 @@ download. ~15 minutes of which is actually hands-on.
    - **Configure wireless LAN**: tick this if you're using Wi-Fi. Enter
      your SSID + password. Pick your Wi-Fi country (e.g. US).
    - **Set locale settings**: time zone + keyboard layout for your region.
+     **Don't skip the time zone** — Pi OS defaults to `Etc/UTC` if you leave
+     it blank, which makes every dashboard timestamp read several hours off
+     from your wall clock. The fix later is `sudo timedatectl set-timezone
+     America/New_York` (or whatever zone) + `docker compose restart birdwatch`,
+     but it's much less hassle to set it here.
 
    **Services tab:**
    - **Enable SSH** → **Use password authentication**.
@@ -191,7 +196,7 @@ minutes your first detection (assuming there are birds at the feeder).
 | `denied: requires authentication` on `docker compose up` | The GHCR package isn't public yet. Tell Joe. |
 | Dashboard returns "site can't be reached" | `docker ps` — is the container running? If not, `docker logs birdwatch` shows why. |
 | Camera shows "disconnected" in the dashboard | Wrong RTSP URL, wrong credentials, or the camera blocks the connection. Try the URL in VLC first to confirm. |
-| Detection timestamps off by several hours | The TZ inheritance broke — `docker exec birdwatch date` should match wall clock. |
+| Detection timestamps off by several hours | The host's timezone is wrong (defaulted to `Etc/UTC`). Fix: `sudo timedatectl set-timezone America/New_York` (substitute your zone — list them with `timedatectl list-timezones \| grep America`), then `cd ~/birdwatch && docker compose restart birdwatch`. `docker exec birdwatch date` should now match your wall clock. |
 
 For anything else, open an issue on this repo with the output of
 `docker logs --tail 200 birdwatch` and a brief description of what you
