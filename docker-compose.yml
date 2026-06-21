@@ -39,16 +39,43 @@ services:
       # and you can drop the two mounts below.
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-    # Uncomment the devices: + group_add: blocks below if you're using a wired Pi camera
-    # (Arducam / Raspberry Pi Camera Module attached over the CSI ribbon cable) instead of an
-    # RTSP IP camera. The Settings → Camera page picks which backend the engine uses; both can
-    # coexist on disk, you just have to expose the v4l2 device into the container.
+    #
+    # Pi camera support: uncomment these three blocks if you're using a wired Arducam /
+    # Raspberry Pi Camera Module over the CSI ribbon cable. On Pi OS Bookworm the camera is
+    # owned by libcamera, not legacy v4l2 — libcamera-still inside the container needs the
+    # whole ISP pipeline (videoN nodes), the dma_heap allocator, the media controllers, and
+    # udev access for camera discovery. group 44 is the `video` group on Pi OS, which is what
+    # lets the container actually open the hardware. See PISETUP.md for ribbon orientation +
+    # enabling the camera interface on the Pi itself.
+    #
+    # ADD this line to the volumes: block above (don't replace, append):
+    #   - /run/udev:/run/udev:ro
+    #
+    # ADD these two blocks at the same indentation level as `volumes:` and `environment:`:
     #
     # devices:
-    #   - /dev/video0:/dev/video0   # single-camera Pi (most installs)
-    #   - /dev/video1:/dev/video1   # add more lines if `ls /dev/video*` shows multiple
+    #   - /dev/dma_heap
+    #   - /dev/video0
+    #   - /dev/video10
+    #   - /dev/video11
+    #   - /dev/video12
+    #   - /dev/video13
+    #   - /dev/video14
+    #   - /dev/video15
+    #   - /dev/video16
+    #   - /dev/video18
+    #   - /dev/video20
+    #   - /dev/video21
+    #   - /dev/video22
+    #   - /dev/video23
+    #   - /dev/video31
+    #   - /dev/media0
+    #   - /dev/media1
+    #   - /dev/media2
+    #   - /dev/media3
+    #   - /dev/media4
     # group_add:
-    #   - "44"                      # `video` group on Pi OS; lets the container open /dev/video*
+    #   - "44"
     labels:
       # Only THIS container is managed by the watchtower sidecar — other containers on the
       # host are left untouched (we set --label-enable on watchtower below).
@@ -71,14 +98,6 @@ services:
       WATCHTOWER_LABEL_ENABLE: "true"
       # Remove the old image after a successful update — keeps the disk tidy.
       WATCHTOWER_CLEANUP: "true"
-      # Pin the Docker API version. Docker 26+ dropped legacy API versions and refuses
-      # connections from clients that try to negotiate < 1.40. Watchtower's bundled client
-      # defaults to a version below that on some Docker daemons, which puts the container
-      # in a restart loop with "client version 1.25 is too old. Minimum supported API
-      # version is 1.40" and birdwatch's apply POST then fails with a DNS error because
-      # watchtower never stays up long enough to register. 1.44 is recent enough to satisfy
-      # current Docker daemons and old enough to be widely supported.
-      DOCKER_API_VERSION: "1.44"
     volumes:
       # Required for watchtower to manage other containers. This is the standard homelab-
       # accepted tradeoff: anything that can write to docker.sock effectively has root on
