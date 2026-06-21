@@ -163,4 +163,3 @@ The product site lives at <https://www.birdwatchai.com>. For
 operational issues, open an issue on this repo — please include the output
 of `docker logs --tail 200 birdwatch` and the contents of
 `data/config.json` (with any API keys / passwords redacted).
-
