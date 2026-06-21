@@ -89,6 +89,34 @@ set in Step 1.) Accept the fingerprint when prompted, enter your password.
 the Pi's IP in your router's admin page (look for the hostname you set),
 then `ssh birdwatch@<that IP>`.
 
+### If Wi-Fi didn't come up on first boot
+
+Pi Imager's Wi-Fi pre-config doesn't always survive Bookworm's switch to
+NetworkManager — you might tick the Wi-Fi box and still find the Pi
+unreachable. The reliable recovery: **plug in Ethernet temporarily**, SSH
+in over the wire, then set up Wi-Fi from the Pi shell with the built-in
+TUI:
+
+```bash
+sudo nmtui
+```
+
+In the menu: **Activate a connection** → pick your SSID → enter the
+Wi-Fi password → OK → Back → Quit. Takes ~30 seconds. Then verify with
+`nmcli device status` — `wlan0` should show `connected` with your SSID.
+At that point you can unplug Ethernet and the Pi keeps going on Wi-Fi;
+NetworkManager remembers the connection across reboots.
+
+**If `nmcli device wifi list` returns nothing** (no networks visible at
+all), the Wi-Fi country code probably isn't set:
+
+```bash
+sudo raspi-config nonint do_wifi_country US   # or your country code
+sudo nmcli device wifi list                   # should now list networks
+```
+
+Pi 5 radios refuse to scan until a country code is registered.
+
 ## 4. Update the OS and install git
 
 Once you're at the Pi's prompt:
