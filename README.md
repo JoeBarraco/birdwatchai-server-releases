@@ -106,8 +106,10 @@ Optionally, a ZIP code for weather correlation. The setup wizard walks through t
 
 ## Using a Pi camera (CSI ribbon cable)
 
-The dashboard supports a wired Pi camera as an alternative to RTSP. A few one-time
-steps to wire it up:
+The dashboard supports a wired Arducam / Raspberry Pi Camera Module attached over the
+CSI ribbon cable, as an alternative to RTSP. Capture goes through libcamera (the
+modern Pi camera stack), not legacy v4l2 — so the container needs a broader set of
+device passthroughs than a USB webcam would. One-time setup:
 
 1. **Plug the ribbon cable in with the Pi powered off.** Lift the CSI port's clip,
    slide the ribbon in (contacts toward the HDMI port on Pi 4 / 5), press the clip
@@ -116,20 +118,38 @@ steps to wire it up:
    → Interface Options → Camera → Yes → Finish → reboot. (No-op on most fresh installs:
    libcamera + v4l2 compat are enabled by default.)
 3. **Verify the OS sees it.** SSH in and run `libcamera-hello --list-cameras` — you
-   should see at least one camera listed. Also confirm `ls /dev/video*` shows
-   `/dev/video0`.
-4. **Expose the device into the container.** Edit `docker-compose.yml` (in the same
-   folder you ran `docker compose up -d`) and uncomment the `devices:` + `group_add:`
-   blocks at the bottom of the `birdwatch:` service. Save, then
-   `docker compose up -d` to recreate the container.
-5. **Switch the camera type in the dashboard.** Open `http://<your-host>:8080` →
-   Settings → Camera → set "Camera type" to **Pi camera** → enter the device path
-   (`/dev/video0` for a single camera) → click **Test camera** to confirm a frame
-   captures → **Save**.
+   should see at least one camera listed (e.g. `imx519` for an Arducam motorized-lens
+   module, `imx708` for the Camera Module 3). If "No cameras available!", go back to
+   the ribbon-cable seat — that's the most common cause.
+4. **Edit `~/birdwatch/docker-compose.yml`** to expose the camera into the container.
+   The file ships with the relevant lines commented out at the bottom of the
+   `birdwatch:` service. Uncomment (a) the single line to add to `volumes:`
+   (`- /run/udev:/run/udev:ro`), (b) the whole `devices:` block, and (c) the whole
+   `group_add:` block.
+5. **Recreate the container** with the new mounts:
+   ```bash
+   cd ~/birdwatch
+   docker compose up -d
+   ```
+6. **Switch the camera type in the dashboard.** Open `http://<your-host>:8080` →
+   Settings → Camera → set "Camera type" to **Pi camera** → leave the device path at
+   `0` (libcamera's camera index; the field also accepts `/dev/video0` for
+   compatibility) → click **Test camera**. A frame should come back within a few
+   seconds. **Save**.
 
-The dashboard's existing motion + identify pipeline runs on the Pi camera feed
-the same as on RTSP — frame-diff motion detection is the default trigger (Settings →
-Detection → Motion detection threshold). ONVIF doesn't apply to wired cameras.
+If Test camera errors out, the most useful diagnostic is:
+
+```bash
+docker exec birdwatch libcamera-hello --list-cameras
+```
+
+Run inside the container — if it doesn't see the camera, the devices/udev mounts
+aren't right. Compare the dashboard logs (`docker logs birdwatch --tail 30`) against
+what rpicam-still reports for hints.
+
+The existing motion + identify pipeline runs on the Pi camera feed the same as on
+RTSP — frame-diff motion detection is the default trigger (Settings → Detection →
+Motion detection threshold). ONVIF doesn't apply to wired cameras.
 
 ## Releases
 
@@ -143,3 +163,4 @@ The product site lives at <https://www.birdwatchai.com>. For
 operational issues, open an issue on this repo — please include the output
 of `docker logs --tail 200 birdwatch` and the contents of
 `data/config.json` (with any API keys / passwords redacted).
+
