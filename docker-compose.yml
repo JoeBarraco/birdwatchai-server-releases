@@ -40,6 +40,10 @@ services:
       # wrong time" — see PISETUP.md troubleshooting.
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      # Expose the HOST's hostname (read-only) so the dashboard's network finder can label this
+      # server by its real name (e.g. "birdwatch-serverpi", reachable as birdwatch-serverpi.local)
+      # instead of the container's random hex ID. See BirdWatch.Core.Diagnostics.ServerHost.
+      - /etc/hostname:/etc/host-hostname:ro
     #
     # Pi camera support: uncomment the single `privileged: true` line below if you're using a
     # wired Arducam / Raspberry Pi Camera Module over the CSI ribbon cable. On Pi OS Bookworm

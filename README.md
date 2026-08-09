@@ -46,6 +46,11 @@ folder for the database + config, and binds to host port 8080.
 http://<your-host-ip>:8080
 ```
 
+On a Pi you set a hostname on, `http://birdwatch.local:8080` works too — no IP
+needed. **Headless and don't know the host's IP?** See
+[FIND-SERVER.md](FIND-SERVER.md) — a double-click tool (or one-line command)
+that scans your network and hands you a clickable link to the dashboard.
+
 Follow the setup wizard to point at your camera, set your location, and
 configure notifications. Your detection history + config persist in
 `~/birdwatch/data/` — back that folder up if you care about it.

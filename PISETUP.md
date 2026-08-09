@@ -174,6 +174,13 @@ http://birdwatch.local:8080
 
 (Or `http://<pi-ip>:8080` if `.local` doesn't resolve.)
 
+> **Can't reach the dashboard, or don't know the Pi's IP?** The Pi is headless,
+> so there's no screen to read the address off. Download **BirdWatchFinder** — a
+> double-click tool (Windows) that scans your network, finds every BirdWatchAI
+> server on it, and hands you a clickable link to the dashboard. No IP hunting,
+> no typing. See **[FIND-SERVER.md](FIND-SERVER.md)** for the download and a
+> PowerShell / macOS / Linux alternative.
+
 You'll land on the **First-time setup wizard**. The card on top says
 "👋 First-time setup" and points you at `/setup` — click **Start setup**.
 
@@ -186,6 +193,12 @@ The wizard walks through:
   format is `rtsp://username:password@cameraip/stream2`. **Use
   `stream2`, not `stream1`** — `stream1` is 2K and saturates Wi-Fi,
   causing h264 corruption. `stream2` is 720p and reliable.
+  **Don't know the camera's IP?** **BirdWatchFinder** (see
+  [FIND-SERVER.md](FIND-SERVER.md)) also scans for Tapo / ONVIF cameras and
+  prints their IP addresses. First set the camera's `username`/`password` in
+  the Tapo app under **Advanced Settings → Camera Account** — those are the
+  credentials that go in the RTSP URL, and the camera won't accept RTSP (or
+  reliably show up in the scan) until you do.
 - **Location** — ZIP code. Used to fetch outdoor temperature for each
   detection (Open-Meteo, no API key needed).
 - **Email notifications** — optional. SMTP server + credentials. Gmail
@@ -218,7 +231,9 @@ minutes your first detection (assuming there are birds at the feeder).
 
 | Symptom | What to try |
 |---|---|
-| `ssh: Could not resolve hostname` | Use the Pi's IP instead of `.local`. Find it in your router's admin page. |
+| `ssh: Could not resolve hostname` | Use the Pi's IP instead of `.local` — find it in your router's admin page. (BirdWatchFinder can't help yet at this step; it looks for the running server on port 8080, which doesn't exist until after install.) |
+| Dashboard `birdwatch.local:8080` won't load / don't know the Pi's IP | Run **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) — it scans your LAN and hands you a clickable link to the dashboard. |
+| Don't know the camera's IP for the RTSP URL | **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) also finds Tapo / ONVIF cameras and prints their IPs. Enable the camera's "Camera Account" in the Tapo app first. |
 | `Permission denied (publickey,password)` | Username typo, or you didn't enable password SSH in Step 1's Services tab. Re-image. |
 | `docker: command not found` after Step 5 | The Docker install script failed silently. Run again and watch for errors. |
 | `denied: requires authentication` on `docker compose up` | The GHCR package isn't public yet. Tell Joe. |
