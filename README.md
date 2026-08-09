@@ -16,7 +16,7 @@ x86 Linux both work). Once it's running you'll have a web dashboard at
 > single linear flow:
 >
 > - [**Raspberry Pi (bare SD card)**](PISETUP.md)
-> - [**Windows 10 / 11 (Docker Desktop)**](WINDOWS-SETUP.md)
+> - [**Windows 10 / 11 (Docker Desktop)**](WINDOWSSETUP.md)
 >
 > The Quick Start below assumes you already have Docker installed.
 
