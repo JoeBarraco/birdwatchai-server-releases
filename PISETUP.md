@@ -158,15 +158,40 @@ Wi-Fi password → OK → Back → Quit. Takes ~30 seconds. Then verify with
 At that point you can unplug Ethernet and the Pi keeps going on Wi-Fi;
 NetworkManager remembers the connection across reboots.
 
-**If `nmcli device wifi list` returns nothing** (no networks visible at
-all), the Wi-Fi country code probably isn't set:
+**If "Activate a connection" lists no Wi-Fi networks at all** — just your
+wired connection, or an empty list — the radio itself is off. Nothing
+errors out; the networks simply aren't there. Two causes, check them in
+this order.
+
+**1. The Wi-Fi radio is switched off in NetworkManager.** Back out to
+nmtui's main menu → **Radio** → look at the **Wi-Fi** line. If it offers
+**Turn Wi-Fi on** (i.e. it's currently disabled), select it. Then **Back**
+→ **Activate a connection**, and your SSID should be listed. Fresh Pi OS
+Lite images ship with the radio disabled more often than you'd expect.
+
+CLI equivalent, if you'd rather not use the TUI:
+
+```bash
+nmcli radio wifi on
+```
+
+**2. The Wi-Fi country code isn't set.** If the radio is on and the list
+is *still* empty:
 
 ```bash
 sudo raspi-config nonint do_wifi_country US   # or your country code
 sudo nmcli device wifi list                   # should now list networks
 ```
 
-Pi 5 radios refuse to scan until a country code is registered.
+Pi radios refuse to scan until a regulatory domain is registered, and a
+missing country code is often what left the radio blocked in the first
+place — so if the Radio menu won't stay on, set the country code and try
+again. To see the block directly:
+
+```bash
+rfkill list wifi          # want "Soft blocked: no"
+sudo rfkill unblock wifi  # clears a soft block manually
+```
 
 ## 4. Update the OS and install git
 
@@ -286,6 +311,7 @@ minutes your first detection (assuming there are birds at the feeder).
 | Dashboard `birdwatch.local:8080` won't load / don't know the Pi's IP | Run **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) — it scans your LAN and hands you a clickable link to the dashboard. |
 | Don't know the camera's IP for the RTSP URL | **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) also finds Tapo / ONVIF cameras and prints their IPs. Enable the camera's "Camera Account" in the Tapo app first. |
 | `WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!` / `Host key verification failed` | Expected after re-imaging the SD card, swapping Pis, or reusing a hostname — the Pi made new host keys and your PC remembers the old ones. Run `ssh-keygen -R birdwatch.local` (and again with the IP if you've connected that way too), then reconnect and accept the new fingerprint. See [Step 3](#if-ssh-shouts-remote-host-identification-has-changed) for how to verify the fingerprint first. |
+| `nmtui` → **Activate a connection** shows no Wi-Fi networks | The radio is off. In nmtui: **Radio** → **Turn Wi-Fi on** (or `nmcli radio wifi on`), then try **Activate a connection** again. Still empty? Set the country code: `sudo raspi-config nonint do_wifi_country US`. See [Step 3](#if-wi-fi-didnt-come-up-on-first-boot). |
 | `Permission denied (publickey,password)` | Username typo, or you didn't enable password SSH in Step 1's Services tab. Re-image. |
 | `docker: command not found` after Step 5 | The Docker install script failed silently. Run again and watch for errors. |
 | `denied: requires authentication` on `docker compose up` | The GHCR package isn't public yet. Tell Joe. |
