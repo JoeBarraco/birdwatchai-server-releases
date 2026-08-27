@@ -19,8 +19,9 @@ is sent anywhere.
 
 ## Windows — the easy way (download and double-click)
 
-1. Download **[BirdWatchFinder.exe](https://github.com/JoeBarraco/birdwatchai-server-releases/releases/latest/download/BirdWatchFinder.exe)**
-   (from the latest release).
+1. Download **[BirdWatchFinder.exe](https://github.com/JoeBarraco/BirdWatchAI-Releases/releases/download/v1.0.0-finder/BirdWatchFinder.exe)**
+   (hosted on the BirdWatchAI-Releases repo, which is where our binaries live —
+   this repo publishes tags and release notes only).
 2. **Double-click it.** A window opens, scans your network, shows the dashboard
    address, and offers to open it in your browser.
 

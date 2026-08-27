@@ -23,6 +23,10 @@ Total time: ~30–45 minutes, mostly waiting for Docker Desktop to download.
 
 ## 1. Install Docker Desktop
 
+> **You don't need a Docker account.** The installer and Docker Desktop's
+> "sign in / sign up" prompts are optional — skip them. BirdWatchAI's image
+> pulls from a public GitHub Container Registry that needs no login.
+
 1. Download from <https://www.docker.com/products/docker-desktop/>.
 2. Run the installer. Accept defaults — **Use WSL 2 based engine** must be
    checked (it's the default on Windows 10 2004+ and Windows 11).
@@ -199,7 +203,7 @@ docker stats                          :: live CPU / RAM / network per container
 | `docker compose up -d` fails with `Cannot connect to the Docker daemon` | Docker Desktop isn't running. Open it from the Start menu and wait for the whale icon to settle. |
 | `denied: requires authentication` on `docker compose up` | The GHCR package isn't public yet — tell Joe. |
 | Dashboard returns "site can't be reached" | `docker ps` — is `birdwatch` listed with status `Up`? If `Restarting`, `docker logs birdwatch` shows why. |
-| Detection timestamps wrong by several hours | Docker Desktop on Windows runs containers in a Linux VM that uses its own timezone. The compose file's `TZ` env var picks up `${TZ}` from your environment — set it explicitly: edit `docker-compose.yml` and replace `${TZ:-UTC}` with e.g. `America/New_York`, then `docker compose up -d`. |
+| Detection timestamps wrong by several hours | Docker Desktop on Windows runs containers in a Linux VM. The compose file's `/etc/timezone` bind-mount that propagates the host's timezone on Linux/macOS/Pi silently does nothing on Windows (the host has no `/etc/timezone`), so the container falls back to UTC. Fix: edit `docker-compose.yml`, add `TZ: America/New_York` (or your IANA zone) as the **first line under** the `environment:` block of the `birdwatch:` service, then `docker compose up -d`. Verify with `docker exec birdwatch date`. |
 | Camera shows "disconnected" in the dashboard | Wrong RTSP URL, wrong credentials, or your camera blocks the connection from this PC. Try the URL in VLC first to confirm. |
 
 For anything else, open an issue on this repo with the output of
