@@ -289,6 +289,38 @@ When you finish, you land on the main dashboard. The Engine status card
 should show monitoring `Running`, camera `Connected`, and within a few
 minutes your first detection (assuming there are birds at the feeder).
 
+### Already running BirdWatchAI somewhere else?
+
+If this Pi is replacing an existing install — a Windows or macOS box running
+BirdWatchAI Server, or the old WinForms desktop app — you don't have to retype
+its settings. Go to **Settings → Config → Import a configuration** and pick that
+install's `config.json`. Both formats are recognised automatically.
+
+On a Windows or macOS server the file is in the `data` folder next to its
+`docker-compose.yml` — e.g. `C:\Users\you\BirdWatch\data\config.json`. The
+compose file bind-mounts that folder, so it's an ordinary folder you can browse
+to. Copy it to whatever machine your browser is on (USB stick, network share,
+`scp`) and pick it in the file dialog.
+
+Nothing is applied when you pick the file. You get a table of every setting that
+would change, current value beside proposed, with a checkbox per row — untick
+anything you want to keep — and a **"Before Migration"** backup is taken before
+the first change lands, so it's reversible from **Settings → Config → Backups**.
+
+Two things worth knowing:
+
+- **Your log folder is never imported.** It's a path on the machine that wrote
+  the file, and a `C:\…` path means nothing inside the Pi's container.
+- **Check the license and community rows if the old server is still running.**
+  The community feeder identity is derived from the license key, so importing it
+  makes both installs post to the community as the same feeder. That's what you
+  want when you're *moving* a feeder and retiring the old machine. If both will
+  run at once, untick those rows so the Pi keeps a separate identity.
+
+Detection history is separate — see **Settings → Config → Import detection
+history**, which copies the old database and its snapshots in from
+`data/migration/`.
+
 ## What just happened
 
 - Your detection history + config live at `~/birdwatch/data/` on the Pi.
