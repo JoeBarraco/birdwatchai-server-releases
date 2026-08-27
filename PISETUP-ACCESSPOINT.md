@@ -192,6 +192,13 @@ Follow [PISETUP.md](PISETUP.md) step 6 to clone and start the stack, then make
 one edit. A container in AP mode generally needs the host's network namespace,
 which changes how the update sidecar is reached.
 
+> **Requires v0.4.415 or newer**, which is what a fresh clone gets today. In
+> that version the server finds the update sidecar by itself, so the single
+> edit below is genuinely all there is. On an older install you'd also have to
+> add a `ports:` block to the watchtower service and repoint
+> `BirdWatch__Update__WatchtowerUrl` by hand — if you're following this on a Pi
+> that's been sitting for a while, `docker compose pull` first.
+
 ```bash
 cd ~/birdwatch && nano docker-compose.yml
 ```
@@ -217,6 +224,20 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8081/v1/update
 
 **`401` is the success case** — reachable, asking for its token. `000` means
 unreachable; check the `ports:` line on the watchtower service.
+
+If `docker compose up -d` fails with a port-binding error, something else on
+this Pi already holds 8081. Publish the sidecar somewhere else and pin the app
+to match — an explicit URL always beats the automatic search:
+
+```yaml
+  watchtower:
+    ports:
+      - "127.0.0.1:8099:8080"
+
+  birdwatch:
+    environment:
+      BirdWatch__Update__WatchtowerUrl: http://127.0.0.1:8099/v1/update
+```
 
 The dashboard is at `http://<pi-hostname>.local:8080` from either network.
 
@@ -293,6 +314,34 @@ backoff, reboot only as a last resort — rather than an aggressive one.
 Reconnecting bounces you straight back to the portal. Ask the venue's IT to
 register the Pi's MAC address instead — one email, and the whole problem
 disappears. Get the MAC with `cat /sys/class/net/wlan1/address`.
+
+## 9. Harden it before it leaves the house
+
+Skip this for a Pi that stays on your home network. Do it for one you're taking
+somewhere else: a device bridging a camera network and someone else's guest
+Wi-Fi is a more interesting target than one sitting behind your own router, and
+it's running with a Docker socket exposed to a container.
+
+From the machine you administer it with, install a key:
+
+```bash
+ssh-copy-id pi@<pi-hostname>.local
+```
+
+Confirm the key works — open a second terminal and log in without being asked
+for a password — then turn password logins off:
+
+```bash
+sudo sed -i 's/^#*PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config && sudo systemctl restart ssh
+```
+
+**Test the key before you run that**, in a session you keep open. Disabling
+password auth without a working key locks you out of a headless Pi, and the
+recovery is pulling the SD card.
+
+Also make sure the account isn't on a default or guessable password, and that
+your AP passphrase from Step 3 is a real one. That AP has internet access and a
+camera on it.
 
 ## Verify the whole thing
 
