@@ -20,12 +20,30 @@ services:
     ports:
       # Dashboard. Change the LEFT side (e.g. "9090:8080") to expose on a different host port.
       - "8080:8080"
+    #
+    # Access-point mode: uncomment `network_mode: host` below if this Pi also serves the camera's
+    # Wi-Fi access point, or anything else that needs the host's network namespace. Doing so
+    # means this container no longer gets Docker's embedded DNS, so it can't resolve the
+    # `watchtower` service name — which is exactly why the sidecar publishes its API on the
+    # host's loopback below, and why we no longer pin an update URL here. The app tries the
+    # service name first and falls back to 127.0.0.1:8081, so BOTH modes work with no other
+    # edits. If you uncomment this, also delete the `ports:` block above — Docker silently
+    # discards published ports in host mode and leaving them there is just misleading.
+    #
+    # network_mode: host
+    #
     environment:
       # Wires the dashboard's "Apply update" button to the watchtower sidecar below. The token
       # must match WATCHTOWER_HTTP_API_TOKEN on the watchtower service. The default below works
       # as-is on a single-install machine; set BIRDWATCH_UPDATE_TOKEN in a .env file (or your
       # shell) if you'd rather use your own.
-      BirdWatch__Update__WatchtowerUrl: http://watchtower:8080/v1/update
+      #
+      # There is deliberately no WatchtowerUrl here. The address depends on the networking mode
+      # above, and a compose file can't be changed by an update (watchtower recreates a container
+      # from its existing config), so hardcoding one address would strand every host-mode install
+      # on a broken update button. Left unset, the app probes both known addresses. Set
+      # BirdWatch__Update__WatchtowerUrl only to pin a non-standard address — that disables the
+      # probe.
       BirdWatch__Update__WatchtowerToken: ${BIRDWATCH_UPDATE_TOKEN:-birdwatch-update-please}
     volumes:
       # All persistent state lives here: config.json, birdwatch.db (SQLite), snapshots/, logs/,
@@ -69,6 +87,16 @@ services:
     image: containrrr/watchtower
     container_name: birdwatch-watchtower
     restart: unless-stopped
+    ports:
+      # Reachable on the host's loopback so a host-networked birdwatch container (see the
+      # access-point note above) can still find it — compose service-name DNS doesn't exist in
+      # that mode. Harmless in the default bridge mode, where the service name is used instead.
+      # 8081 rather than 8080 because in host mode the dashboard itself owns 8080 on the host.
+      #
+      # Keep this bound to 127.0.0.1. Watchtower has the Docker socket, so anything that can
+      # POST here with the token can pull and run images as root on this machine — it must not
+      # listen on the LAN.
+      - "127.0.0.1:8081:8080"
     environment:
       WATCHTOWER_HTTP_API_UPDATE: "true"
       WATCHTOWER_HTTP_API_PERIODIC_POLLS: "false"

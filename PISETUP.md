@@ -8,6 +8,12 @@ install the app, the [README](README.md) Quick Start is the shorter path.
 Total time: about 45 minutes, mostly waiting for things to flash, boot, or
 download. ~15 minutes of which is actually hands-on.
 
+> **Want the Pi to host its own Wi-Fi network for the camera?** If the camera
+> can't join your existing Wi-Fi — out of range, or a network that won't take an
+> IP camera — the Pi can run an access point for it while staying online through
+> a second adapter. Do steps 1-5 below first, then switch to
+> **[PISETUP-ACCESSPOINT.md](PISETUP-ACCESSPOINT.md)**.
+
 ## What you need
 
 **Hardware**
@@ -88,6 +94,51 @@ set in Step 1.) Accept the fingerprint when prompted, enter your password.
 **If `.local` doesn't resolve** (some Windows configs disable mDNS), find
 the Pi's IP in your router's admin page (look for the hostname you set),
 then `ssh birdwatch@<that IP>`.
+
+### If SSH shouts "REMOTE HOST IDENTIFICATION HAS CHANGED!"
+
+```
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!      @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+...
+Offending ECDSA key in C:\Users\you/.ssh/known_hosts:9
+Host key verification failed.
+```
+
+The wording is alarming on purpose, but on a fresh setup it's almost
+always benign. A Pi generates brand-new SSH host keys the first time it
+boots a new image. Your PC remembers the *old* keys under the same name,
+sees different ones, and refuses to connect. You'll hit this if you've
+re-imaged the SD card, swapped in a different Pi, or reused a hostname
+(`birdwatch.local`) that some other machine used to answer to.
+
+Tell your PC to forget the old keys for that name:
+
+```powershell
+ssh-keygen -R birdwatch.local
+```
+
+(Use the same hostname — or IP — you're actually connecting to. If you've
+connected both ways, run it once for each: `ssh-keygen -R 192.168.1.42`.)
+
+Then connect again. You'll get the normal first-time
+`Are you sure you want to continue connecting?` prompt — type `yes`.
+
+**Before you type `yes`, check the fingerprint.** Compare the
+`SHA256:...` string SSH shows you against what the Pi itself reports. If
+you have a keyboard and monitor on the Pi, or you're already in over
+Ethernet, run there:
+
+```bash
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+The `SHA256:` part should match exactly. On a home network this is
+belt-and-braces, but it's the one step that separates "I re-imaged my Pi"
+from the man-in-the-middle attack the warning is actually about — so if
+the fingerprints *don't* match and you didn't re-image, stop and figure
+out why.
 
 ### If Wi-Fi didn't come up on first boot
 
@@ -234,12 +285,14 @@ minutes your first detection (assuming there are birds at the feeder).
 | `ssh: Could not resolve hostname` | Use the Pi's IP instead of `.local` — find it in your router's admin page. (BirdWatchFinder can't help yet at this step; it looks for the running server on port 8080, which doesn't exist until after install.) |
 | Dashboard `birdwatch.local:8080` won't load / don't know the Pi's IP | Run **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) — it scans your LAN and hands you a clickable link to the dashboard. |
 | Don't know the camera's IP for the RTSP URL | **BirdWatchFinder** (see [FIND-SERVER.md](FIND-SERVER.md)) also finds Tapo / ONVIF cameras and prints their IPs. Enable the camera's "Camera Account" in the Tapo app first. |
+| `WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!` / `Host key verification failed` | Expected after re-imaging the SD card, swapping Pis, or reusing a hostname — the Pi made new host keys and your PC remembers the old ones. Run `ssh-keygen -R birdwatch.local` (and again with the IP if you've connected that way too), then reconnect and accept the new fingerprint. See [Step 3](#if-ssh-shouts-remote-host-identification-has-changed) for how to verify the fingerprint first. |
 | `Permission denied (publickey,password)` | Username typo, or you didn't enable password SSH in Step 1's Services tab. Re-image. |
 | `docker: command not found` after Step 5 | The Docker install script failed silently. Run again and watch for errors. |
 | `denied: requires authentication` on `docker compose up` | The GHCR package isn't public yet. Tell Joe. |
 | Dashboard returns "site can't be reached" | `docker ps` — is the container running? If not, `docker logs birdwatch` shows why. |
 | Camera shows "disconnected" in the dashboard | Wrong RTSP URL, wrong credentials, or the camera blocks the connection. Try the URL in VLC first to confirm. |
 | Detection timestamps off by several hours | The host's timezone is wrong (defaulted to `Etc/UTC`). Fix: `sudo timedatectl set-timezone America/New_York` (substitute your zone — list them with `timedatectl list-timezones \| grep America`), then `cd ~/birdwatch && docker compose restart birdwatch`. `docker exec birdwatch date` should now match your wall clock. |
+| "Watchtower unreachable" when you click **Apply update** | Usually not Watchtower — check it's actually down before assuming (`docker ps` should show `birdwatch-watchtower` as `Up (healthy)`). If it's healthy, the two containers can't see each other. Most often that's because `birdwatch` runs with `network_mode: host`, which gives it no Docker DNS, so the `watchtower` service name doesn't resolve. Confirm with `docker exec birdwatch getent hosts watchtower` — no output means DNS is the problem. Fix: make sure the `watchtower` service in your `docker-compose.yml` has `ports: - "127.0.0.1:8081:8080"`, then `docker compose up -d`. Verify with `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8081/v1/update` — **`401` is success** (reachable, asking for its token); `000` means still unreachable. |
 
 For anything else, open an issue on this repo with the output of
 `docker logs --tail 200 birdwatch` and a brief description of what you
