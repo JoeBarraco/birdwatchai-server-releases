@@ -1,5 +1,49 @@
 # BirdWatchAI Server — Windows setup
 
+There are two ways to run BirdWatchAI on Windows 10/11:
+
+- **Option A — the one-click installer (recommended).** About five minutes,
+  no Docker, no command line. Start here unless you have a reason not to.
+- **Option B — Docker Desktop.** About 30–45 minutes. Pick this only if you
+  already run Docker and want BirdWatchAI alongside your other containers.
+
+## Option A — One-click installer
+
+1. Open the
+   [latest release](https://github.com/JoeBarraco/birdwatchai-server-releases/releases/latest)
+   and download **`BirdWatchAI_Setup_<version>.exe`** under **Assets**.
+2. Run it. It installs for your Windows user only, so there's **no admin
+   prompt**.
+   - Windows may show **"Windows protected your PC"** because the installer
+     isn't code-signed yet. Click **More info → Run anyway**.
+   - If you used the older **BirdWatch AI** Windows app, Setup offers to bring
+     its sightings, photos, clips and settings across. It copies them and
+     leaves the old app untouched; you finish the import later in
+     **Settings → Config**.
+3. BirdWatchAI opens in its own window and walks you through the setup
+   wizard: camera, location, notifications.
+4. Closing the window keeps BirdWatchAI running in the **system tray** (by the
+   clock), so it keeps watching the feeder. Right-click the tray icon →
+   **Exit** to stop it completely.
+
+**Where your data lives:** `%LOCALAPPDATA%\BirdWatchAI` — the database,
+settings, photos and clips. Back that folder up if you care about it.
+Uninstalling asks before deleting it, and defaults to keeping it.
+
+**Watching from your phone or another PC:** out of the box the dashboard is
+reachable only on this PC. To open it from other devices on your network,
+turn that on in **Settings → Network**, then restart BirdWatchAI (tray icon →
+Exit, then start it again). Windows will ask once whether to allow it through
+the firewall: allow it on **private** networks.
+
+**Updating:** download the newer installer from the latest release and run
+it over the top. Your data stays where it is. The dashboard shows an
+**⬆ Update available** button when there's a new release.
+
+Everything from here down is **Option B (Docker Desktop)**.
+
+## Option B — Docker Desktop
+
 Linear walkthrough from a fresh Windows 10/11 machine to a running BirdWatchAI
 install. Companion to [PISETUP.md](PISETUP.md) for Raspberry Pi installs.
 

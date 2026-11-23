@@ -9,6 +9,16 @@ The server is one Docker image (~600 MB, multi-arch — Raspberry Pi 4/5 and
 x86 Linux both work). Once it's running you'll have a web dashboard at
 `http://<your-host>:8080` with a first-time setup wizard.
 
+## Windows: one-click installer (easiest)
+
+On Windows 10 / 11 you don't need Docker at all. Download
+**`BirdWatchAI_Setup_<version>.exe`** from the
+[latest release](https://github.com/JoeBarraco/birdwatchai-server-releases/releases/latest),
+run it, and BirdWatchAI opens in its own window with the same dashboard and
+setup wizard. No admin rights, no extra downloads, about five minutes. See
+[WINDOWS-SETUP.md](WINDOWS-SETUP.md) for the details (and for the Docker
+route, if you'd rather run it that way).
+
 ## Quick start
 
 > **New to Docker?** Use one of the platform-specific walkthroughs instead —
@@ -16,7 +26,7 @@ x86 Linux both work). Once it's running you'll have a web dashboard at
 > single linear flow:
 >
 > - [**Raspberry Pi (bare SD card)**](PISETUP.md)
-> - [**Windows 10 / 11 (Docker Desktop)**](WINDOWS-SETUP.md)
+> - [**Windows 10 / 11**](WINDOWS-SETUP.md) — one-click installer, or Docker Desktop
 > - [**macOS (Intel or Apple Silicon, Docker Desktop)**](MACOS-SETUP.md)
 >
 > The Quick Start below assumes you already have Docker installed.
