@@ -36,9 +36,13 @@ turn that on in **Settings → Network**, then restart BirdWatchAI (tray icon �
 Exit, then start it again). Windows will ask once whether to allow it through
 the firewall: allow it on **private** networks.
 
-**Updating:** download the newer installer from the latest release and run
-it over the top. Your data stays where it is. The dashboard shows an
-**⬆ Update available** button when there's a new release.
+**Updating:** when there's a new release the dashboard shows an
+**⬆ Update available** button. Click it, then **Apply update**: BirdWatchAI
+downloads the new installer, checks it, installs it, and reopens by itself
+about a minute later. To have that happen without asking, tick
+**Settings → Config → Auto-apply new releases**. Your data, settings and
+startup choice are kept either way. Running a newer installer by hand also
+works; it recognises the existing install and goes straight to **Upgrade**.
 
 Everything from here down is **Option B (Docker Desktop)**.
 
